@@ -1,22 +1,61 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { useRouter } from "next/navigation";
+import { createInvoice } from "@/services/invoiceService";
+import { Invoice } from "@/types/invoice";
 
 export default function NewInvoicePage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [status, setStatus] = useState("pending");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    setTimeout(() => {
-      console.log('Invoice created!');
-      router.push('/dashboard/invoice');
-    }, 1000);
+    const invoiceData: Invoice = {
+      id: "INV-001",
+      customer: customerName,
+      amount: amount ? parseFloat(amount) : 0.0, // Optional amount
+      status: status
+        ? (status as "draft" | "pending" | "paid" | "overdue")
+        : "pending",
+      date: "2023-05-15",
+      dueDate: "2023-06-15",
+      customerEmail: "billing@acme.com",
+      customerAddress: "123 Business St.\nSan Francisco, CA 94103",
+      notes: "Thank you for your business!",
+      items: [
+        {
+          description: "Web Design Services",
+          quantity: 1,
+          unitPrice: 1000,
+          total: 1000,
+        },
+        {
+          description: "Hosting (1 year)",
+          quantity: 1,
+          unitPrice: 200,
+          total: 200,
+        },
+      ],
+    };
+
+    createInvoice(invoiceData)
+      .then(() => {
+        setIsSubmitting(false);
+        console.log("Invoice created!");
+        router.push("/dashboard/invoice");
+      })
+      .catch((error) => {
+        setIsSubmitting(false);
+        console.error("Error creating invoice:", error);
+        // Handle error (e.g., show a notification)
+      });
   };
 
   return (
@@ -25,21 +64,28 @@ export default function NewInvoicePage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="customer" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="customer"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Customer Name
           </label>
           <input
             type="text"
             id="customer"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"
             placeholder="Enter customer name"
+            onChange={(e) => setCustomerName(e.target.value)}
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="amount"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Amount
             </label>
             <div className="relative rounded-md shadow-sm">
@@ -52,20 +98,25 @@ export default function NewInvoicePage() {
                 required
                 min="0"
                 step="0.01"
-                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md text-black"
                 placeholder="0.00"
+                onChange={(e) => setAmount(e.target.value)}
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="status"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Status
             </label>
             <select
               id="status"
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              className="mt-1 block w-full pl-3 pr-10 py-2 border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-black"
               defaultValue="pending"
+              onChange={(e) => setStatus(e.target.value)}
             >
               <option value="pending">Pending</option>
               <option value="paid">Paid</option>
@@ -78,16 +129,12 @@ export default function NewInvoicePage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push('/dashboard/invoice')}
+            onClick={() => router.push("/dashboard/invoice")}
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Creating...' : 'Create Invoice'}
+          <Button type="submit" variant="primary" disabled={isSubmitting}>
+            {isSubmitting ? "Creating..." : "Create Invoice"}
           </Button>
         </div>
       </form>
