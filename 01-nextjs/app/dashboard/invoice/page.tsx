@@ -1,39 +1,44 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
-import Link from 'next/link';
-import { getInvoices, deleteInvoice } from '@/services/invoiceService';
-import { useRouter } from 'next/navigation';
-import { Invoice } from '@/types/invoice';
+import React from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import Link from "next/link";
+import { getInvoices, deleteInvoice } from "@/services/invoiceService";
+import { Invoice } from "@/types/invoice";
 
 export default function InvoicePage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const filteredStatus = useSearchParams().get("status");
 
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
-        const data = await getInvoices();
+        let data = await getInvoices();
+        if (filteredStatus) {
+          const statuses = filteredStatus.split(",");
+          data = data.filter((invoice) => statuses.includes(invoice.status));
+        }
         setInvoices(data);
       } catch (error) {
-        console.error('Failed to fetch invoices:', error);
+        console.error("Failed to fetch invoices:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchInvoices();
-  }, []);
+  }, [filteredStatus]);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this invoice?')) {
+    if (window.confirm("Are you sure you want to delete this invoice?")) {
       try {
         await deleteInvoice(id);
-        setInvoices(invoices.filter(invoice => invoice.id !== id));
+        setInvoices(invoices.filter((invoice) => invoice.id !== id));
       } catch (error) {
-        console.error('Failed to delete invoice:', error);
+        console.error("Failed to delete invoice:", error);
       }
     }
   };
@@ -47,19 +52,34 @@ export default function InvoicePage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
                 Invoice ID
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
                 Customer
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
                 Date
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
                 Amount
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
                 Status
               </th>
               <th scope="col" className="relative px-6 py-3">
@@ -83,11 +103,18 @@ export default function InvoicePage() {
                   ${invoice.amount.toLocaleString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                    ${invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
-                      invoice.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'}`}>
-                    {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                    ${
+                      invoice.status === "paid"
+                        ? "bg-green-100 text-green-800"
+                        : invoice.status === "pending"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {invoice.status.charAt(0).toUpperCase() +
+                      invoice.status.slice(1)}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
